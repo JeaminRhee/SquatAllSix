@@ -130,7 +130,6 @@
               });
 
             setInterval(function(){
-
                 pubnub.publish({
                   channel: channel,
                   message: {
@@ -151,7 +150,7 @@
         // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/pose
 
         // the link to your model provided by Teachable Machine export panel
-        const URL = "./models/SQUATxAllSix/my-pose-model/";
+        const URL = "./models/SQUATwAllSix/my-pose-model/";
         let model, webcam, ctx, labelContainer, maxPredictions;
 
         window.onload = function(){
@@ -206,6 +205,8 @@
         var wprobprog = 327
         var status = "stand"
         var count = 0
+        var music = "stop"
+        var quit = 0
 
         async function predict() {
 
@@ -236,65 +237,83 @@
             // Prediction #1: run input through posenet
             // estimatePose can take in an image, video or canvas html element
             
-            if (prediction[0].probability.toFixed(2) >= 0.90) {
+            if (prediction[0].probability.toFixed(2) >= 0.89) {
                 if (status == "squat") {
                     count++
-                    var audio = new Audio('./data/Voice/한글/유학생/' + count%10 +'_유학생.mp3');
-                    audio.play();
-
+                    
                     progress = progress-32.7
                     if(progress <= 0) {
                         progress = 327-32.7
                     }
                     $('.progress').css('stroke-dashoffset', progress);
                     $('#counter').html(count);
+                    
 
                     if((count >= 10) && (count % 10==0)){
                         var audio = new Audio('./data/Voice/English/VeryGood_UK.mp3')
-                        audio.play()    
+                        audio.play();
+                        await sleep(100);   
+                    } else {
+                    	var audio = new Audio('./data/Voice/한글/유학생/' + count%10 +'_유학생.mp3');
+                    	audio.play();
                     }
                 }
                 status = "stand"
-            } else if (prediction[1].probability.toFixed(2) >= 0.90) {
+                await sleep(70);
+            } else if (prediction[1].probability.toFixed(2) >= 0.89) {
                 status = "squat"
-            } 
-
-            // BAD POSTURE
-            if (prediction[2].probability.toFixed(2) >= 0.90) {
+                await sleep(70);
+            
+             // BAD POSTURE
+            } else if (prediction[2].probability.toFixed(2) == 0.99) {
                 if (count % 2 == 0){
                 	if (count > 10){
-                		covar audio = new Audio('./data/Voice/한글/유학생/한글_장난치세요.mp3');
+                		var audio = new Audio('./data/Voice/한글/유학생/한글_장난치세요.mp3');
                 		audio.play();	
+                		await sleep(50);
                 	} else {
-                		covar audio = new Audio('./data/Voice/한글/유학생/일본_장난치세요.mp3');
-                		audio.play();	
+                		var audio = new Audio('./data/Voice/한글/유학생/일본_장난치세요.mp3');
+                		audio.play();
+                		await sleep(50);	
                 	}
                 } else {
-                	covar audio = new Audio('./data/Voice/한글/유학생/장난쳐_유학생.mp3');
+                	var audio = new Audio('./data/Voice/한글/유학생/장난쳐_유학생.mp3');
                 	audio.play();
+                	await sleep(50);
                 }
-            }
-
-            // QUIT
-            if (prediction[3].probability.toFixed(2) >= 0.91) {
+            // QUIT    
+            } else if (prediction[3].probability.toFixed(2) >= 0.85) {
                 await sleep(330);
-                if (prediction[3].probability.toFixed(2) >= 0.90) {
-                	if (count % 2 == 0){
+                if (prediction[3].probability.toFixed(2) >= 0.85) {
+                	if (quit == 3){
                 		var audio = new Audio('./data/Voice/한글/유학생/한글_열정없구나.mp3');
                 		audio.play();
+                		await sleep(50);
+                		location.replace("index.html")
+                		// sleep 하고 실제로 quit 
             		} else {
             			var audio = new Audio('./data/Voice/한글/유학생/일본_열정없구나.mp3');
                 		audio.play();
+                		await sleep(50);
             		}
+            		quit++;
                 }
-            }
+            // MUSIC_PLAY & STOP
+            }else if (prediction[4].probability.toFixed(2) >= 0.78) {
+            	await sleep(330);
+                if (prediction[4].probability.toFixed(2) >= 0.78) {
+                	 // intial = "stop";
+					if (music == "stop"){
+						music = "play"
+                	} else {
+                		music = "stop"
+                	}
 
-            // MUSIC_PLAY
-            if (prediction[4].probability.toFixed(2) >= 0.75) {
-            	await sleep(500);
-                if (prediction[4].probability.toFixed(2) >= 0.80) {
-                	var audio = new Audio('./data/Voice/HoldOn.mp3');
-                	audio.play();
+                	if (music == "play"){
+                		var audio = new Audio('./data/Voice/HoldOn_short.mp3');
+                		audio.play();
+                	} 
+                	await sleep(50);
                 }
             }
 
